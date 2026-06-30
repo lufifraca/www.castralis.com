@@ -546,26 +546,13 @@
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     renderer.setSize(W(), H());
     renderer.outputEncoding = T.sRGBEncoding;
-    renderer.toneMapping = T.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.86;
+    renderer.toneMapping = T.NoToneMapping; // flat blueprint colours, no lighting
     host.appendChild(renderer.domElement);
 
     const scene = new T.Scene();
     const camera = new T.PerspectiveCamera(31, W() / H(), 0.1, 100);
     camera.position.set(3.15, 2.2, 4.05);
     camera.lookAt(0, 0.04, 0);
-
-    // environment for believable metal reflections
-    try {
-      const pmrem = new T.PMREMGenerator(renderer);
-      if (T.RoomEnvironment) scene.environment = pmrem.fromScene(new T.RoomEnvironment(), 0.04).texture;
-    } catch (e) {}
-
-    // lighting rig
-    const key = new T.DirectionalLight(0xffffff, 1.08); key.position.set(3, 5, 4); scene.add(key);
-    const fill = new T.DirectionalLight(0x9fb6d6, 0.45); fill.position.set(-4, 1.5, -2); scene.add(fill);
-    const rim = new T.DirectionalLight(0xe2a33e, 1.05); rim.position.set(-2.5, 2.2, -4); scene.add(rim);
-    scene.add(new T.AmbientLight(0x3a465c, 0.35));
 
     // ---- texture helpers ----
     const canvasTex = (size, draw, srgb) => {
@@ -614,53 +601,56 @@
       return g;
     };
 
-    // ---- materials (chassis colour #26303F per blueprint v4.1) ----
-    const mkSteel = () => new T.MeshPhysicalMaterial({ color: 0x1b2532, metalness: 0.9, roughness: 0.57, clearcoat: 0.4, clearcoatRoughness: 0.55, envMapIntensity: 0.32 });
-    const steelDark = new T.MeshStandardMaterial({ color: 0x0b111d, metalness: 0.6, roughness: 0.7 });
-    const portMat = new T.MeshStandardMaterial({ color: 0x0c1622, metalness: 0.5, roughness: 0.5, emissive: 0x1d5560, emissiveIntensity: 0.7 });
-    const boltMat = new T.MeshStandardMaterial({ color: 0x6c7480, metalness: 0.95, roughness: 0.35 });
-    const gold = new T.MeshStandardMaterial({ color: 0xe2a33e, metalness: 1, roughness: 0.2, emissive: 0xd1881f, emissiveIntensity: 0.9, envMapIntensity: 1.2 });
-    const capMat = mkSteel(), coreMat = mkSteel(), baseMat = mkSteel();
-    const cyl = (r, h, mat, seg) => new T.Mesh(new T.CylinderGeometry(r, r, h, seg || 24), mat);
+    // ---- blueprint look: dark flat fills + glowing line edges (matches the dossier HUD) ----
+    const STEEL = 0x6481a6, GOLD = 0xe2a33e, ACCENT = 0x5ec6d2;
+    const box = (w, h, d) => new T.BoxGeometry(w, h, d);
+    const fillMat = () => new T.MeshBasicMaterial({ color: 0x0a1019, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+    const lineMat = (c, o) => new T.LineBasicMaterial({ color: c, transparent: true, opacity: o == null ? 0.92 : o });
+    const segGeo = (pts) => { const g = new T.BufferGeometry(); g.setAttribute("position", new T.Float32BufferAttribute(pts, 3)); return g; };
+    const ringPts = (s, y, arr) => { const p = [[-s,-s],[s,-s],[s,s],[-s,s]]; for (let i = 0; i < 4; i++) { const a = p[i], b = p[(i+1)%4]; arr.push(a[0],y,a[1], b[0],y,b[1]); } };
+    const wireEdges = (geo, c, o) => new T.LineSegments(new T.EdgesGeometry(geo, 18), lineMat(c, o));
+    // a solid-but-ghosted volume outlined in glowing lines; returns {group, edgeMat}
+    const wire = (geo, c) => {
+      const g = new T.Group(); g.add(new T.Mesh(geo, fillMat()));
+      const e = wireEdges(geo, c || STEEL); g.add(e); return { group: g, edge: e.material };
+    };
+    const cylWire = (r, h, seg, c, o) => wireEdges(new T.CylinderGeometry(r, r, h, seg || 18), c, o);
 
-    // ---- BASE (thermal): corner M6 mounts + interlocking rail channels ----
+    // ---- BASE: frame + corner M6 mounts + rail channels ----
     const baseG = new T.Group();
-    baseG.add(new T.Mesh(roundedBox(1.78, 0.22, 1.78, 0.18), baseMat));
-    { const ins = new T.Mesh(roundedBox(1.46, 0.06, 1.46, 0.13), steelDark); ins.position.y = 0.10; baseG.add(ins); }
-    [-0.34, 0.34].forEach(z => { const r = new T.Mesh(new T.BoxGeometry(1.2, 0.04, 0.12), steelDark); r.position.set(0, 0.115, z); baseG.add(r); });
-    [[-0.62,-0.62],[0.62,-0.62],[0.62,0.62],[-0.62,0.62]].forEach(([x, z]) => {
-      const b = cyl(0.075, 0.05, steelDark); b.position.set(x, 0.12, z); baseG.add(b);
-      const h = cyl(0.038, 0.07, boltMat, 6); h.position.set(x, 0.13, z); baseG.add(h); });
+    const baseBody = wire(box(1.78, 0.22, 1.78)); baseG.add(baseBody.group);
+    { const yT = 0.112, p = []; ringPts(0.66, yT, p); ringPts(0.5, yT, p);
+      [-0.34, 0.34].forEach(z => p.push(-0.55, yT, z, 0.55, yT, z));
+      baseG.add(new T.LineSegments(segGeo(p), lineMat(STEEL, 0.6)));
+      [[-0.62,-0.62],[0.62,-0.62],[0.62,0.62],[-0.62,0.62]].forEach(([x, z]) => { const m = cylWire(0.07, 0.05, 12, STEEL, 0.8); m.position.set(x, 0.12, z); baseG.add(m); }); }
     baseG.position.y = 0.11;
 
-    // ---- CORE: front I/O (2×RJ45, 2×SFP, toggle) + rear power connector ----
+    // ---- CORE: front I/O (2×RJ45, 2×SFP, toggle) + rear connector + wordmark ----
     const coreG = new T.Group();
-    coreG.add(new T.Mesh(roundedBox(1.62, 0.5, 1.62, 0.16), coreMat));
-    const fz = 0.8;
-    const port = (x, w, h) => {
-      const f = new T.Mesh(new T.BoxGeometry(w, h, 0.05), steelDark); f.position.set(x, 0.015, fz); coreG.add(f);
-      const led = new T.Mesh(new T.BoxGeometry(w * 0.66, h * 0.4, 0.02), portMat); led.position.set(x, 0.015, fz + 0.02); coreG.add(led);
-    };
-    port(-0.5, 0.11, 0.11); port(-0.35, 0.11, 0.11);   // 2× RJ45
-    port(-0.15, 0.16, 0.07); port(0.04, 0.16, 0.07);   // 2× SFP
-    { const sw = new T.Mesh(new T.BoxGeometry(0.055, 0.12, 0.07), boltMat); sw.position.set(0.42, 0.015, fz + 0.02); coreG.add(sw); }
+    const coreBody = wire(box(1.62, 0.5, 1.62)); coreG.add(coreBody.group);
+    const fz = 0.815;
+    const portWire = (x, w, h, c) => { const p = wireEdges(box(w, h, 0.04), c, 0.85); p.position.set(x, 0.02, fz); coreG.add(p); };
+    portWire(-0.5, 0.11, 0.11, ACCENT); portWire(-0.35, 0.11, 0.11, ACCENT);   // 2× RJ45
+    portWire(-0.15, 0.16, 0.07, ACCENT); portWire(0.04, 0.16, 0.07, ACCENT);   // 2× SFP
+    portWire(0.42, 0.06, 0.12, GOLD);                                          // toggle
     { const wm = new T.Mesh(new T.PlaneGeometry(0.74, 0.16), wordmark()); wm.position.set(0, -0.16, 0.812); coreG.add(wm); }
-    const rz = -0.81;
-    { const ring = cyl(0.14, 0.05, capMat); ring.rotation.x = Math.PI / 2; ring.position.set(0, 0.02, rz); coreG.add(ring);
-      const inner = cyl(0.1, 0.06, steelDark); inner.rotation.x = Math.PI / 2; inner.position.set(0, 0.02, rz - 0.008); coreG.add(inner);
-      const pin = cyl(0.035, 0.07, boltMat); pin.rotation.x = Math.PI / 2; pin.position.set(0, 0.02, rz - 0.01); coreG.add(pin); }
-    [[-0.62,-0.16],[0.62,-0.16],[0.62,0.16],[-0.62,0.16]].forEach(([x, y]) => { const s = cyl(0.04, 0.05, boltMat, 6); s.rotation.x = Math.PI / 2; s.position.set(x, y, rz); coreG.add(s); });
+    { const ring = cylWire(0.14, 0.05, 20, STEEL, 0.85); ring.rotation.x = Math.PI / 2; ring.position.set(0, 0.02, -0.81); coreG.add(ring);
+      const inner = cylWire(0.06, 0.06, 14, STEEL, 0.7); inner.rotation.x = Math.PI / 2; inner.position.set(0, 0.02, -0.81); coreG.add(inner); }
     coreG.position.y = 0.47;
 
-    // ---- CAP: vented housing + amber power core ----
+    // ---- CAP: conduit grille + amber power core ----
     const capG = new T.Group();
-    capG.add(new T.Mesh(roundedBox(1.7, 0.34, 1.7, 0.17), capMat));
-    { const vent = new T.Mesh(new T.PlaneGeometry(1.44, 1.44),
-        new T.MeshStandardMaterial({ map: canvasTex(512, drawVent, true), bumpMap: canvasTex(512, drawVent, false), bumpScale: 0.022, metalness: 0.85, roughness: 0.5, envMapIntensity: 1 }));
-      vent.rotation.x = -Math.PI / 2; vent.position.y = 0.171; capG.add(vent); }
-    const gem = new T.Mesh(new T.OctahedronGeometry(0.17, 0), gold); gem.scale.set(1, 0.82, 1); gem.position.y = 0.2; capG.add(gem);
-    { const glow = new T.Sprite(new T.SpriteMaterial({ map: canvasTex(128, radial([[0,"rgba(255,235,190,.85)"],[0.35,"rgba(226,163,62,.38)"],[1,"rgba(226,163,62,0)"]]), true), blending: T.AdditiveBlending, transparent: true, depthWrite: false }));
-      glow.scale.set(0.86, 0.86, 1); glow.position.y = 0.22; capG.add(glow); }
+    const capBody = wire(box(1.7, 0.34, 1.7)); capG.add(capBody.group);
+    { const y = 0.172, vp = []; [0.2, 0.34, 0.48, 0.62].forEach(s => ringPts(s, y, vp));
+      vp.push(-0.66, y, -0.66, 0.66, y, 0.66, 0.66, y, -0.66, -0.66, y, 0.66); // X-seam
+      capG.add(new T.LineSegments(segGeo(vp), lineMat(STEEL, 0.7))); }
+    const gemGeo = new T.OctahedronGeometry(0.16, 0);
+    const gemGroup = new T.Group();
+    gemGroup.add(new T.Mesh(gemGeo, new T.MeshBasicMaterial({ color: GOLD })));
+    gemGroup.add(wireEdges(gemGeo, 0xffe6ad, 0.95));
+    gemGroup.scale.set(1, 0.82, 1); gemGroup.position.y = 0.2; capG.add(gemGroup);
+    { const glow = new T.Sprite(new T.SpriteMaterial({ map: canvasTex(128, radial([[0,"rgba(255,235,190,.8)"],[0.4,"rgba(226,163,62,.3)"],[1,"rgba(226,163,62,0)"]]), true), blending: T.AdditiveBlending, transparent: true, depthWrite: false }));
+      glow.scale.set(0.7, 0.7, 1); glow.position.y = 0.22; capG.add(glow); }
     capG.position.y = 0.89;
 
     function wordmark() {
@@ -673,13 +663,13 @@
 
     const model = new T.Group(); model.add(baseG, coreG, capG); model.position.y = -0.5; scene.add(model);
 
-    // ground contact shadow
-    { const m = new T.MeshBasicMaterial({ map: canvasTex(128, radial([[0,"rgba(0,0,0,.65)"],[0.6,"rgba(0,0,0,.28)"],[1,"rgba(0,0,0,0)"]]), false), transparent: true, depthWrite: false });
-      const pl = new T.Mesh(new T.PlaneGeometry(3.6, 3.6), m); pl.rotation.x = -Math.PI / 2; pl.position.y = -1.0; scene.add(pl); }
+    // faint ground glow (keeps the node from floating)
+    { const m = new T.MeshBasicMaterial({ map: canvasTex(128, radial([[0,"rgba(100,129,166,.18)"],[0.6,"rgba(100,129,166,.06)"],[1,"rgba(100,129,166,0)"]]), false), transparent: true, depthWrite: false, blending: T.AdditiveBlending });
+      const pl = new T.Mesh(new T.PlaneGeometry(3.4, 3.4), m); pl.rotation.x = -Math.PI / 2; pl.position.y = -1.0; scene.add(pl); }
 
     // ---- scroll-driven disassembly ----
     const caps = $$(".xcap"), meter = $("#xMeter"), hint = $("#xHint");
-    const parts = { cap: { g: capG, y0: 0.89, off: 0.40, mat: capMat }, core: { g: coreG, y0: 0.47, off: 0.11, mat: coreMat }, base: { g: baseG, y0: 0.11, off: -0.34, mat: baseMat } };
+    const parts = { cap: { g: capG, y0: 0.89, off: 0.40, edge: capBody.edge }, core: { g: coreG, y0: 0.47, off: 0.11, edge: coreBody.edge }, base: { g: baseG, y0: 0.11, off: -0.34, edge: baseBody.edge } };
     const ranges = { cap: [0.05, 0.34], core: [0.40, 0.64], base: [0.70, 0.96] };
     const smooth = t => t * t * (3 - 2 * t);
     const seg = (p, a, b) => smooth(Math.min(1, Math.max(0, (p - a) / (b - a))));
@@ -700,12 +690,12 @@
       const active = narrate(curP);
       Object.keys(parts).forEach(k => {
         const pt = parts[k]; pt.g.position.y = pt.y0 + pt.off * seg(curP, ranges[k][0], ranges[k][1]);
-        const tgt = k === active ? 0.16 : 0.0; pt.mat.emissive.setHex(0x2a1c06);
-        pt.mat.emissiveIntensity += (tgt - pt.mat.emissiveIntensity) * Math.min(1, dt * 5);
+        pt.edge.color.setHex(k === active ? 0xe2a33e : 0x6481a6);
+        pt.edge.opacity = k === active ? 1 : 0.92;
       });
       model.rotation.y += dt * 0.16;
       model.position.y = -0.5 + Math.sin(now * 0.0008) * 0.02;
-      gem.rotation.y -= dt * 0.5;
+      gemGroup.rotation.y -= dt * 0.5;
       renderer.render(scene, camera);
       requestAnimationFrame(loop);
     };
