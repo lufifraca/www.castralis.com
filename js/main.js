@@ -127,6 +127,8 @@
       setTimeout(() => boot.remove(), 800);
       if (hasGSAP && window.ScrollTrigger) ScrollTrigger.refresh();
       enterHero();
+      gridFx();
+      decryptText();
     };
     if (reduce) { log.textContent = lines.map(l => l[0] + l[1]).join("\n"); fill.style.width = "100%"; pct.textContent = "100"; setTimeout(finish, 350); return; }
 
@@ -235,23 +237,31 @@
       modules: "03 / ECOSYSTEM", capital: "04 / CAPITAL", gateway: "05 / GATEWAY",
     };
 
-    window.addEventListener("scroll", () => {
+    // position-based tracking: the active section is the LAST one whose top has
+    // crossed a probe line ~38% down the viewport. Works for any section height
+    // (the 400vh pinned triad can never hit a 30%-visible ratio, hence the old skip).
+    const secs = ["identity", "triad", "modules", "capital", "gateway"].map(id => $("#" + id)).filter(Boolean);
+    let current = "";
+    const setActive = (id) => {
+      if (id === current) return; current = id;
+      ticks.forEach(t => t.classList.toggle("is-active", t.dataset.tick === id));
+      if (sbSection && labels[id]) sbSection.textContent = labels[id];
+      if (opState) opState.textContent = "DETERMINISTIC";
+    };
+    const update = () => {
       chrome.classList.toggle("is-stuck", window.scrollY > 40);
-    }, { passive: true });
-
-    const secs = ["identity", "triad", "modules", "capital", "gateway"].map(id => $("#" + id));
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting && e.intersectionRatio > 0.3) {
-          const id = e.target.id;
-          ticks.forEach(t => t.classList.toggle("is-active", t.dataset.tick === id));
-          if (sbSection && labels[id]) sbSection.textContent = labels[id];
-          // op-state outside the triad returns to baseline
-          if (opState && id !== "triad") opState.textContent = "DETERMINISTIC";
-        }
-      });
-    }, { threshold: [0.3, 0.6] });
-    secs.forEach(s => s && io.observe(s));
+      const probe = window.innerHeight * 0.38;
+      let activeId = secs[0] && secs[0].id;
+      secs.forEach(s => { if (s.getBoundingClientRect().top <= probe) activeId = s.id; });
+      if (activeId) setActive(activeId);
+    };
+    if (hasGSAP && window.ScrollTrigger) {
+      ScrollTrigger.create({ start: 0, end: "max", onUpdate: update, onRefresh: update });
+    } else {
+      let ticking = false;
+      window.addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(() => { update(); ticking = false; }); } }, { passive: true });
+    }
+    update();
   }
 
   /* ----------------------------------------------------------
@@ -525,6 +535,72 @@
       <text class="lbl" x="120" y="160" text-anchor="middle">PRINCIPIA</text>`;
   }
 
+  /* the castrum drafts itself: draw-on, roads pulse, principia ignites,
+     each lexicon term lights its part of the fort */
+  function castrumAnimate() {
+    const svg = $("#castrumSvg");
+    if (!svg) return;
+    const NS = "http://www.w3.org/2000/svg";
+    const q = s => Array.from(svg.querySelectorAll(s));
+    const walls = q(".wall, .wall2"), roads = q(".road"), towers = q(".tower"), blk = q(".blk");
+    const ctr = svg.querySelector(".ctr"), lbl = svg.querySelector(".lbl");
+    const lexes = $$(".lex");
+    const linkMap = { castra: walls, praesidium: towers, limes: roads, principia: blk.concat(ctr ? [ctr] : []) };
+
+    // hover: light a term's part of the fort (always available)
+    lexes.forEach(l => {
+      const t = linkMap[l.dataset.link] || [];
+      l.addEventListener("mouseenter", () => { t.forEach(e => e.classList.add("cx-hot")); l.classList.add("is-linked"); });
+      l.addEventListener("mouseleave", () => { t.forEach(e => e.classList.remove("cx-hot")); l.classList.remove("is-linked"); });
+    });
+
+    if (reduce || !hasGSAP) return; // static plan already rendered
+
+    const stroked = walls.concat(towers, blk, roads);
+    stroked.forEach(el => { let L; try { L = el.getTotalLength(); } catch (e) { L = 400; } el.style.strokeDasharray = L; el.style.strokeDashoffset = L; });
+    gsap.set(towers.concat(blk), { fillOpacity: 0 });
+    gsap.set([ctr, lbl], { opacity: 0 });
+
+    const glow = document.createElementNS(NS, "circle");
+    glow.setAttribute("cx", "120"); glow.setAttribute("cy", "120"); glow.setAttribute("r", "6");
+    glow.setAttribute("fill", "none"); glow.setAttribute("stroke", "#e2a33e"); glow.setAttribute("stroke-width", "2");
+    svg.appendChild(glow); gsap.set(glow, { opacity: 0 });
+
+    const sweep = () => {
+      gsap.to(roads, { opacity: 0.9, duration: 1.4, repeat: -1, yoyo: true, ease: "sine.inOut" });
+      ["h", "v"].forEach(axis => {
+        const ln = document.createElementNS(NS, "line");
+        const a = axis === "h" ? { x1: 22, y1: 120, x2: 218, y2: 120 } : { x1: 120, y1: 22, x2: 120, y2: 218 };
+        Object.entries(a).forEach(([k, v]) => ln.setAttribute(k, v));
+        ln.setAttribute("class", "cx-pulse"); svg.appendChild(ln);
+        ln.style.strokeDasharray = "3 46";
+        gsap.to(ln, { strokeDashoffset: axis === "h" ? -49 : 49, duration: 1.7, repeat: -1, ease: "none" });
+      });
+      ["castra", "praesidium", "limes", "principia"].forEach((key, i) => {
+        gsap.delayedCall(0.4 + i * 0.7, () => {
+          const t = linkMap[key] || [], lex = lexes.find(l => l.dataset.link === key);
+          t.forEach(e => e.classList.add("cx-hot")); if (lex) lex.classList.add("is-linked");
+          gsap.delayedCall(0.62, () => { t.forEach(e => e.classList.remove("cx-hot")); if (lex) lex.classList.remove("is-linked"); });
+        });
+      });
+    };
+
+    const tl = gsap.timeline({ paused: true, defaults: { ease: "power2.inOut" } });
+    tl.to(walls, { strokeDashoffset: 0, duration: 0.7, stagger: 0.14 })
+      .to(towers, { strokeDashoffset: 0, duration: 0.4, stagger: 0.04 }, "-=0.25")
+      .to(towers.concat(blk), { fillOpacity: 1, duration: 0.4 }, "-=0.15")
+      .to(blk, { strokeDashoffset: 0, duration: 0.4 }, "<")
+      .to(roads, { strokeDashoffset: 0, duration: 0.55, stagger: 0.05 }, "-=0.1")
+      .to(ctr, { opacity: 1, duration: 0.4 }, "-=0.05")
+      .to(glow, { opacity: 0.85, duration: 0.1 }, "<")
+      .to(glow, { attr: { r: 36 }, opacity: 0, strokeWidth: 0.5, duration: 0.7, ease: "power2.out" }, "<")
+      .to(lbl, { opacity: 1, duration: 0.4 }, "-=0.4")
+      .add(sweep);
+
+    if (window.ScrollTrigger) ScrollTrigger.create({ trigger: "#doctrine", start: "top 72%", once: true, onEnter: () => tl.play() });
+    else { const io = new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) { tl.play(); io.disconnect(); } }), { threshold: 0.3 }); io.observe($("#doctrine")); }
+  }
+
   /* ----------------------------------------------------------
      11. PRAESIDIUM — FULL 3D (Three.js, procedural placeholder)
          swap in a real assets/praesidium.glb later via loadGLB()
@@ -683,6 +759,7 @@
     };
 
     let curP = 0, targetP = 0, running = true, last = performance.now();
+    const _col = new T.Color();
     const loop = () => {
       if (!running) return;
       const now = performance.now(), dt = Math.min(0.05, (now - last) / 1000); last = now;
@@ -690,8 +767,8 @@
       const active = narrate(curP);
       Object.keys(parts).forEach(k => {
         const pt = parts[k]; pt.g.position.y = pt.y0 + pt.off * seg(curP, ranges[k][0], ranges[k][1]);
-        pt.edge.color.setHex(k === active ? 0xe2a33e : 0x6481a6);
-        pt.edge.opacity = k === active ? 1 : 0.92;
+        pt.edge.color.lerp(_col.setHex(k === active ? 0xe2a33e : 0x6481a6), Math.min(1, dt * 4));
+        pt.edge.opacity += ((k === active ? 1 : 0.92) - pt.edge.opacity) * Math.min(1, dt * 4);
       });
       model.rotation.y += dt * 0.16;
       model.position.y = -0.5 + Math.sin(now * 0.0008) * 0.02;
@@ -728,6 +805,78 @@
   }
 
   /* ----------------------------------------------------------
+     12. LIVING BLUEPRINT GRID — data packets travel the mesh
+  ---------------------------------------------------------- */
+  function gridFx() {
+    if (reduce) return;
+    const c = document.createElement("canvas"); c.id = "gridfx"; document.body.appendChild(c);
+    const ctx = c.getContext("2d");
+    let w, h, raf = null, packets = [], GRID = 48, dpr = Math.min(2, window.devicePixelRatio || 1);
+    const resize = () => { w = innerWidth; h = innerHeight; c.width = w * dpr; c.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+    resize(); addEventListener("resize", resize);
+    const spawn = () => {
+      const vertical = Math.random() < 0.5;
+      const lines = vertical ? Math.round(w / GRID) : Math.round(h / GRID);
+      const fromStart = Math.random() < 0.5, max = vertical ? h : w;
+      return { vertical, line: Math.round(Math.random() * lines) * GRID, pos: fromStart ? -40 : max + 40,
+        dir: fromStart ? 1 : -1, speed: 0.6 + Math.random() * 1.1, len: 22 + Math.random() * 46,
+        hue: Math.random() < 0.6 ? "226,163,62" : "100,129,166" };
+    };
+    for (let i = 0; i < 8; i++) { const p = spawn(); p.pos = Math.random() * (p.vertical ? h : w); packets.push(p); }
+    const draw = () => {
+      ctx.clearRect(0, 0, w, h); ctx.globalCompositeOperation = "lighter";
+      packets.forEach((p, i) => {
+        p.pos += p.dir * p.speed; const max = p.vertical ? h : w;
+        const a = Math.max(0, Math.min(1, p.pos / 150, (max - p.pos) / 150)) * 0.2;
+        const x = p.vertical ? p.line : p.pos, y = p.vertical ? p.pos : p.line;
+        const x2 = p.vertical ? p.line : p.pos - p.dir * p.len, y2 = p.vertical ? p.pos - p.dir * p.len : p.line;
+        const g = ctx.createLinearGradient(x, y, x2, y2);
+        g.addColorStop(0, `rgba(${p.hue},${a})`); g.addColorStop(1, `rgba(${p.hue},0)`);
+        ctx.strokeStyle = g; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.fillStyle = `rgba(${p.hue},${a * 1.3})`; ctx.fillRect(x - 0.8, y - 0.8, 1.6, 1.6);
+        if (p.pos < -70 || p.pos > max + 70) packets[i] = spawn();
+      });
+      raf = requestAnimationFrame(draw);
+    };
+    document.addEventListener("visibilitychange", () => { if (document.hidden) { if (raf) { cancelAnimationFrame(raf); raf = null; } } else if (!raf) draw(); });
+    draw();
+  }
+
+  /* ----------------------------------------------------------
+     13. DECRYPT TEXT — headings/eyebrows resolve from cipher
+  ---------------------------------------------------------- */
+  function decryptText() {
+    if (reduce) return;
+    const CH = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789/\\#%<>*+=·";
+    const targets = $$(".sec-head__h2, .xstage__h2, .doctrine__h2, .gateway__h2, .sec-head__sub, .readout__sub, .hero__tag");
+    const run = (el) => {
+      if (el._dz) return;                                  // already decrypting
+      const html = el.getAttribute("data-full") || el.innerHTML;
+      el.setAttribute("data-full", html);
+      const tokens = html.split(/(<[^>]+>)/g);
+      let total = 0; tokens.forEach(t => { if (!t.startsWith("<")) total += t.replace(/\s/g, "").length; });
+      if (!total) return;
+      el._dz = true;
+      const dur = Math.min(1100, 260 + total * 15); let t0 = null;
+      const frame = (ts) => {
+        if (t0 == null) t0 = ts;
+        const prog = Math.min(1, (ts - t0) / dur), locked = Math.floor(prog * total);
+        let idx = 0, out = "";
+        tokens.forEach(t => {
+          if (t.startsWith("<")) { out += t; return; }
+          for (const ch of t) { if (/\s/.test(ch)) { out += ch; continue; } out += idx++ < locked ? ch : CH[Math.floor(Math.random() * CH.length)]; }
+        });
+        el.innerHTML = out;
+        if (prog < 1) requestAnimationFrame(frame); else { el.innerHTML = html; el._dz = false; }
+      };
+      requestAnimationFrame(frame);
+    };
+    // decrypt once — the first time each element scrolls into view per page load/refresh
+    const io = new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) { run(e.target); io.unobserve(e.target); } }), { threshold: 0.55 });
+    targets.forEach(t => io.observe(t));
+  }
+
+  /* ----------------------------------------------------------
      BOOT ALL
   ---------------------------------------------------------- */
   const start = () => {
@@ -735,6 +884,7 @@
     boot();
     initTriad();
     buildCastrum();
+    castrumAnimate();
     chromeAndRail();
     reveals();
     meshViz();

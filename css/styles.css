@@ -64,6 +64,15 @@ body::before{
 }
 
 ::selection{background:var(--gold);color:#0a0a0a}
+
+/* living blueprint grid — data-packet canvas overlay (subtle, recedes behind content) */
+#gridfx{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.5}
+
+/* CTA scan-sweep on hover (gold buttons) */
+.nav__key{overflow:hidden}
+.nav__key::before,.submit::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);transform:translateX(-130%)}
+.nav__key:hover::before,.submit:hover::before{animation:ctaScan .7s var(--ease)}
+@keyframes ctaScan{to{transform:translateX(130%)}}
 a{color:inherit;text-decoration:none}
 b,strong{font-weight:700}
 img{max-width:100%;display:block}
@@ -310,6 +319,14 @@ img{max-width:100%;display:block}
 #castrumSvg .tower{fill:rgba(8,13,24,.6);stroke:#46618a;stroke-width:1}
 #castrumSvg .lbl{fill:var(--faint);font-family:var(--f-mono);font-size:8px;letter-spacing:.12em}
 #castrumSvg .ctr{fill:var(--gold)}
+/* draw-on + term-to-fort highlight */
+#castrumSvg .wall,#castrumSvg .wall2,#castrumSvg .road,#castrumSvg .blk,#castrumSvg .tower{transition:stroke .25s,fill .25s}
+#castrumSvg .cx-hot{stroke:var(--gold);stroke-opacity:1;opacity:1}
+#castrumSvg .blk.cx-hot{fill:rgba(226,163,62,.16)}
+#castrumSvg .cx-pulse{stroke:rgba(94,198,210,.95);stroke-width:2;stroke-linecap:round;pointer-events:none}
+.lex{transition:background .25s,border-color .25s}
+.lex.is-linked{background:var(--panel-2)}
+.lex.is-linked dt{color:var(--gold-hi)}
 
 /* ============================================================
    ACT 02 — EXPLODED TRIAD (horizontal, piece-by-piece)
@@ -327,8 +344,13 @@ img{max-width:100%;display:block}
 .xstage__hint.is-hidden{opacity:0}
 .xbox{position:relative;z-index:2;width:100%;display:grid;place-items:center;perspective:1400px}
 /* WebGL stage */
-.xbox__stage{width:100%;max-width:920px;height:clamp(300px,46vh,560px);position:relative}
-.xbox__stage canvas{display:block;width:100%!important;height:100%!important}
+.xbox__stage{width:100%;max-width:920px;height:clamp(300px,46vh,560px);position:relative;overflow:hidden}
+.xbox__stage canvas{display:block;width:100%!important;height:100%!important;animation:holoFlicker 5.5s linear infinite}
+/* hologram scan sweep over the node */
+.xbox__stage::after{content:"";position:absolute;left:10%;right:10%;top:0;height:2px;z-index:2;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(94,198,210,.5),transparent);animation:holoScan 6s ease-in-out infinite}
+@keyframes holoFlicker{0%,100%{opacity:1}46%{opacity:1}48%{opacity:.95}50%{opacity:1}88%{opacity:1}90%{opacity:.92}92%{opacity:1}}
+@keyframes holoScan{0%{top:8%;opacity:0}12%{opacity:.7}88%{opacity:.7}100%{top:88%;opacity:0}}
 /* SVG fallback (shown only if WebGL unavailable) */
 .xbox__svg{width:100%;max-width:860px;height:auto;max-height:42vh;overflow:visible;
   filter:drop-shadow(0 40px 70px rgba(0,0,0,.6));transform-origin:50% 56%;
