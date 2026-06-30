@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en" data-state="boot">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CASTRALIS // System Dossier v2.6 — Grid-Edge Distributed Compute</title>
+<meta name="description" content="Castralis engineers power-aware, grid-edge distributed compute infrastructure. We do not depend on the core. We defend and process at the perimeter." />
+<meta name="theme-color" content="#060912" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/styles.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23060912'/%3E%3Crect x='5' y='5' width='22' height='22' rx='7' fill='none' stroke='%23c6d2e3' stroke-width='1.5'/%3E%3Cpath d='M16 5 L27 16 L16 27 L5 16 Z' fill='none' stroke='%23c6d2e3' stroke-width='1.3'/%3E%3Cpath d='M9 9 L23 23 M23 9 L9 23' stroke='%23c6d2e3' stroke-width='1.3'/%3E%3Crect x='12' y='12' width='8' height='8' rx='1' transform='rotate(45 16 16)' fill='%23e2a33e'/%3E%3C/svg%3E" />
+</head>
+<body>
+
+<!-- ============ BOOT / DECRYPT OVERLAY ============ -->
+<div class="boot" id="boot" aria-hidden="true">
+  <div class="boot__frame">
+    <div class="boot__brand">
+      <span class="boot__mark" aria-hidden="true"></span>
+      CASTRALIS
+    </div>
+    <pre class="boot__log" id="bootLog"></pre>
+    <div class="boot__bar"><span class="boot__fill" id="bootFill"></span></div>
+    <div class="boot__meta">
+      <span id="bootPct">00</span>%
+      <span>SECURE DOSSIER // IDENT: 44.092.C</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PERSISTENT HUD CHROME ============ -->
+<header class="chrome chrome--top" id="topChrome">
+  <a class="brand" href="#identity" aria-label="Castralis home">
+    <span class="brand__mark" aria-hidden="true">
+      <svg viewBox="0 0 120 120" width="40" height="40">
+        <rect x="14" y="14" width="92" height="92" rx="30" fill="none" stroke="currentColor" stroke-width="4.5"/>
+        <path d="M60 20 L100 60 L60 100 L20 60 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M33 33 L87 87 M87 33 L33 87" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" opacity=".85"/>
+        <rect x="47" y="47" width="26" height="26" rx="2" transform="rotate(45 60 60)" fill="var(--gold)"/>
+        <rect x="54" y="54" width="12" height="12" transform="rotate(45 60 60)" fill="#fff3d6" opacity=".5"/>
+      </svg>
+    </span>
+    <span class="brand__type">CASTRALIS</span>
+  </a>
+  <nav class="nav" aria-label="Primary">
+    <a href="#triad">SYSTEMS</a>
+    <a href="#capital">INFRASTRUCTURE CAPITAL</a>
+    <a href="#modules">SPECIFICATIONS</a>
+    <a href="#gateway" class="nav__key">PORTAL KEY</a>
+  </nav>
+</header>
+
+<!-- side progress rail -->
+<aside class="rail" aria-hidden="true" id="rail">
+  <span class="rail__line"></span>
+  <ol class="rail__ticks">
+    <li data-tick="identity"><b>01</b><span>IDENTITY</span></li>
+    <li data-tick="triad"><b>02</b><span>CONSTRAINTS</span></li>
+    <li data-tick="modules"><b>03</b><span>ECOSYSTEM</span></li>
+    <li data-tick="capital"><b>04</b><span>CAPITAL</span></li>
+    <li data-tick="gateway"><b>05</b><span>GATEWAY</span></li>
+  </ol>
+</aside>
+
+<!-- top-right ident readout -->
+<div class="ident" aria-hidden="true">
+  <span>SECURE DOSSIER // IDENT: 44.092.C</span>
+  <span>CLASS: ENTERPRISE INFRASTRUCTURE SPEC</span>
+  <span class="ident__state">OPERATIONAL STATE: <b id="opState">DETERMINISTIC</b></span>
+</div>
+
+<main id="dossier">
+
+  <!-- ============ ACT 01 — MANIFESTO ============ -->
+  <section class="act act--hero" id="identity">
+    <div class="grid-bg" aria-hidden="true"></div>
+    <div class="hero">
+      <div class="hero__tag">
+        <span class="dot"></span> SECTION 01 // IDENTITY CORE &amp; SYSTEM MANIFESTO
+      </div>
+      <h1 class="hero__title">
+        <span class="line"><span class="line__in">THE FRONTIER</span></span>
+        <span class="line"><span class="line__in">IS THE <em>CORE.</em></span></span>
+      </h1>
+      <p class="hero__abstract">
+        Centralized cloud architecture has hit an unyielding physical wall. The geometric
+        expansion of high-density AI workloads has accelerated a direct collision with the
+        physical limits of civil infrastructure — power-grid congestion, thermal saturation,
+        real-estate bottlenecks, and speed-of-light backhaul latency.
+      </p>
+      <p class="hero__abstract hero__abstract--accent">
+        Castralis bypasses the centralized crisis entirely. We deploy modular, autonomous,
+        mutually reinforcing compute nodes directly into the civil, industrial, and utility
+        assets that already exist. <strong>We do not depend on the core. We defend and process
+        at the perimeter.</strong>
+      </p>
+      <div class="hero__cue">
+        <span>SCROLL TO DECRYPT DOSSIER</span>
+        <span class="hero__cue-line"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DOCTRINE — THE MEANING OF THE NAME ============ -->
+  <section class="act act--doctrine" id="doctrine">
+    <div class="grid-bg" aria-hidden="true"></div>
+    <div class="wrap doctrine">
+      <div class="doctrine__plan" aria-hidden="true">
+        <svg viewBox="0 0 240 240" id="castrumSvg"></svg>
+        <span class="doctrine__plan-cap">CASTRUM // STANDARD FORT PLAN</span>
+      </div>
+      <div class="doctrine__txt" data-reveal>
+        <span class="sec-head__sub">DOCTRINE // ETYMOLOGY OF THE PERIMETER</span>
+        <h2 class="doctrine__h2">THE NAME IS THE ARCHITECTURE.</h2>
+        <p class="doctrine__lede">
+          Rome did not secure the frontier with a single massive wall. It secured it with
+          <em>castra</em> — a network of highly organized, self-sustaining fortresses, linked by
+          the <em>limes</em>, the strategic transit corridors of the frontier.
+        </p>
+        <p class="doctrine__body">
+          <strong>Castralis</strong> is the modern digital equivalent. We deploy modular, mutually
+          reinforcing compute nodes into existing civil and industrial infrastructure — turning
+          localized data footprints into sovereign domains of resilience. We do not depend on the
+          core; we defend and process at the perimeter.
+        </p>
+        <dl class="lexicon">
+          <div class="lex"><dt>CASTRA</dt><dd>The fortress network.<span>— the distributed compute fabric</span></dd></div>
+          <div class="lex"><dt>PRAESIDIUM</dt><dd>The fortified garrison.<span>— the hardened compute node</span></dd></div>
+          <div class="lex"><dt>LIMES</dt><dd>The frontier corridors.<span>— the autonomous mesh protocol</span></dd></div>
+          <div class="lex"><dt>PRINCIPIA</dt><dd>The headquarters at the center.<span>— the command interface</span></dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ACT 02 — EXPLODED TRIAD ============ -->
+  <section class="act act--xtriad" id="triad">
+    <div class="xtriad">
+      <div class="xstage">
+        <div class="grid-bg grid-bg--stage" aria-hidden="true"></div>
+
+        <div class="xstage__head">
+          <span class="readout__sub">SECTION 02 // ANALYSIS OF UNYIELDING SYSTEMS CRITICALITY</span>
+          <h2 class="xstage__h2">THE TRIAD OF PHYSICAL CONSTRAINTS</h2>
+          <span class="xstage__hint" id="xHint">SCROLL TO DISASSEMBLE THE NODE</span>
+        </div>
+
+        <!-- the box: assembles whole, separates piece-by-piece as you scroll -->
+        <div class="xbox">
+          <div class="xbox__stage" id="praesidium3d" role="img" aria-label="Castralis Praesidium 3D node"></div>
+          <svg class="schem__svg xbox__svg is-fallback" id="schemSvg" viewBox="0 0 820 560" aria-hidden="true"></svg>
+        </div>
+
+        <!-- one caption per piece; the active constraint is revealed as its piece detaches -->
+        <div class="xcaption" id="xCaption">
+          <article class="xcap" data-layer="cap">
+            <div class="xcap__no">01</div>
+            <div class="xcap__txt">
+              <span class="xcap__kicker">THE TRANSMISSION CONSTRAINT</span>
+              <h3 class="xcap__title">POWER</h3>
+              <p>Centralized procurement is choked by grid capacity and interconnection queues; long-haul copper bleeds line losses and thermal waste. <b>Mandate //</b> process at the generation source — compute behind the meter, congestion eliminated.</p>
+            </div>
+          </article>
+          <article class="xcap" data-layer="core">
+            <div class="xcap__no">02</div>
+            <div class="xcap__txt">
+              <span class="xcap__kicker">THE GEOGRAPHIC CONSTRAINT</span>
+              <h3 class="xcap__title">LAND</h3>
+              <p>Power-adjacent industrial land is locked in regulatory gridlock; permitting monolithic footprints is no longer viable. <b>Mandate //</b> utilize the existing footprint — rights-of-way, substations, and telecom pads already in place.</p>
+            </div>
+          </article>
+          <article class="xcap" data-layer="base">
+            <div class="xcap__no">03</div>
+            <div class="xcap__txt">
+              <span class="xcap__kicker">THE BACKHAUL CONSTRAINT</span>
+              <h3 class="xcap__title">LATENCY</h3>
+              <p>The speed of light through glass is an immutable threshold; thousands of miles to a centralized cloud is an architectural failure state. <b>Mandate //</b> process within meters of ingestion — sovereign even during total upstream disconnection.</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="stage__meter" aria-hidden="true"><span class="stage__meter-fill" id="xMeter"></span></div>
+      </div>
+
+      <!-- invisible scroll steps drive the disassembly -->
+      <div class="xtriad__steps" aria-hidden="true">
+        <div></div><div></div><div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ACT 03 — ECOSYSTEM MODULES ============ -->
+  <section class="act act--modules" id="modules">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-head__sub">SECTION 03 // ARCHITECTURAL NOMENCLATURE &amp; REQUISITES</span>
+        <h2 class="sec-head__h2">SYSTEM MODULES — THE CASTRALIS ECOSYSTEM</h2>
+      </div>
+
+      <div class="modules">
+        <article class="mod" data-reveal>
+          <header class="mod__head">
+            <span class="mod__spec">PRODUCT SPECIFICATION I</span>
+            <h3 class="mod__name">PRAESIDIUM</h3>
+            <span class="mod__class">Hardened Grid-Edge Compute Node Enclosure</span>
+          </header>
+          <p class="mod__lede">
+            A self-contained, weather-hardened, high-density compute module engineered for
+            deployment in unconditioned, harsh industrial environments.
+          </p>
+          <dl class="spec">
+            <div><dt>CAPACITY MATRIX</dt><dd>Scalable 10kW → 100kW+ localized AI inference workloads.</dd></div>
+            <div><dt>THERMODYNAMIC LOGIC</dt><dd>Zero-water closed-loop ambient cooling. Deterministic across −40°C → +55°C.</dd></div>
+            <div><dt>KINETIC SECURITY</dt><dd>Heavy-gauge anti-tamper steel housing with cryptographic physical-zeroization barriers.</dd></div>
+          </dl>
+        </article>
+
+        <article class="mod" data-reveal>
+          <header class="mod__head">
+            <span class="mod__spec">PRODUCT SPECIFICATION II</span>
+            <h3 class="mod__name">LIMES</h3>
+            <span class="mod__class">Autonomous Mesh Routing &amp; Energy Arbitrage Protocol</span>
+          </header>
+          <p class="mod__lede">
+            The proprietary software fabric that binds independent Praesidium units into a
+            self-healing, mutually reinforcing computational network.
+          </p>
+          <dl class="spec">
+            <div><dt>POWER-AWARE LOAD-SHEDDING</dt><dd>Throttles, suspends, or migrates workloads in real time on grid volatility, thermal thresholds, and spot-pricing.</dd></div>
+            <div><dt>FAULT-TOLERANT ROUTING</dt><dd>If a node drops on a kinetic or thermal event, the surrounding mesh instantly redistributes tasks — no centralized orchestration.</dd></div>
+          </dl>
+          <div class="mesh" aria-hidden="true" data-mesh></div>
+        </article>
+
+        <article class="mod" data-reveal>
+          <header class="mod__head">
+            <span class="mod__spec">PRODUCT SPECIFICATION III</span>
+            <h3 class="mod__name">PRINCIPIA</h3>
+            <span class="mod__class">Institutional Enterprise Command Interface</span>
+          </header>
+          <p class="mod__lede">
+            Real-time telemetry over the distributed domain for infrastructure asset managers
+            and enterprise buyers.
+          </p>
+          <dl class="spec">
+            <div><dt>CORE TELEMETRY</dt><dd>Localized PUE, real-time carbon-intensity matching, cryptographic boundary validation, per-node thermal dissipation.</dd></div>
+          </dl>
+          <div class="telem" aria-hidden="true">
+            <div class="telem__row"><span>PUE</span><b data-tick-val="1.04">1.04</b></div>
+            <div class="telem__row"><span>CARBON MATCH</span><b data-tick-val="98">98%</b></div>
+            <div class="telem__row"><span>BOUNDARY</span><b class="ok">VALID</b></div>
+            <div class="telem__row"><span>THERMAL Δ</span><b data-tick-val="11">11°C</b></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ACT 04 — CAPITAL INCENTIVE ============ -->
+  <section class="act act--capital" id="capital">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-head__sub">SECTION 04 // INFRASTRUCTURE ALLIANCE &amp; CONSORTIUM RETURN LOGIC</span>
+        <h2 class="sec-head__h2">THE CAPITAL INCENTIVE — DECONSTRUCTING MEGA-CAPEX</h2>
+      </div>
+
+      <p class="capital__lede" data-reveal>
+        Castralis transforms passive industrial real estate, stranded renewable generation, and
+        underutilized utility capacity into high-yield, sovereign compute assets — an immediate
+        deployment path that bypasses centralized bottlenecks.
+      </p>
+
+      <div class="ledger" data-reveal>
+        <div class="ledger__path ledger__path--old">
+          <span class="ledger__node">INSUFFICIENT GRID INTERCONNECTION</span>
+          <span class="ledger__arrow">&rarr;</span>
+          <span class="ledger__node ledger__node--fail">MONOLITHIC CAPEX STAGNATION</span>
+        </div>
+        <div class="ledger__vs">VS</div>
+        <div class="ledger__path ledger__path--new">
+          <span class="ledger__node">CASTRALIS EDGE DEPLOYMENT</span>
+          <span class="ledger__arrow">&rarr;</span>
+          <span class="ledger__node ledger__node--win">STRANDED POWER MONETIZATION</span>
+        </div>
+      </div>
+
+      <div class="audience">
+        <article class="aud" data-reveal>
+          <span class="aud__no">A</span>
+          <h3>Energy Producers</h3>
+          <p>Capture curtailed or remote generation directly at the source. Turn stranded power
+             assets into high-performance computing revenue without waiting for grid transmission upgrades.</p>
+        </article>
+        <article class="aud" data-reveal>
+          <span class="aud__no">B</span>
+          <h3>Telecom &amp; Transport Asset Holders</h3>
+          <p>Monetize existing right-of-way footprints by converting passive real estate into
+             essential edge-compute real estate.</p>
+        </article>
+        <article class="aud" data-reveal>
+          <span class="aud__no">C</span>
+          <h3>Infrastructure Funds</h3>
+          <p>Mitigate macroeconomic risk. Distribute capital expenditure across a resilient,
+             diversified network of modular assets rather than a single high-risk facility.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ACT 05 — SECURE GATEWAY ============ -->
+  <section class="act act--gateway" id="gateway">
+    <div class="grid-bg" aria-hidden="true"></div>
+    <div class="wrap gateway">
+      <div class="gateway__intro">
+        <span class="sec-head__sub">SECTION 05 // BOARDROOM PORTAL ENTRY</span>
+        <h2 class="gateway__h2">SECURE GATEWAY &amp;<br>SPECIFICATION REQUEST</h2>
+        <p class="gateway__copy">
+          Access to detailed architectural schematics, thermodynamic white papers, and
+          consortium framework agreements requires validated institutional verification.
+        </p>
+        <ul class="gateway__assure">
+          <li>Architectural schematics</li>
+          <li>Thermodynamic white papers</li>
+          <li>Consortium framework agreements</li>
+        </ul>
+      </div>
+
+      <form class="form" id="dossierForm" novalidate>
+        <div class="form__scanbar"><span></span> SECURE CHANNEL // ENCRYPTION ACTIVE</div>
+        <div class="field">
+          <label for="f-name">FULL NAME / PRIMARY REPRESENTATIVE</label>
+          <input id="f-name" name="name" type="text" autocomplete="name" required />
+          <span class="field__err" data-err></span>
+        </div>
+        <div class="field">
+          <label for="f-org">INSTITUTIONAL ENTITY / FUND / ENTERPRISE</label>
+          <input id="f-org" name="org" type="text" autocomplete="organization" required />
+          <span class="field__err" data-err></span>
+        </div>
+        <div class="field">
+          <label for="f-class">ASSET CLASSIFICATION</label>
+          <select id="f-class" name="classification" required>
+            <option value="" disabled selected>SELECT CLASSIFICATION</option>
+            <option>Utility</option>
+            <option>Energy Producer</option>
+            <option>Infrastructure Capital</option>
+            <option>Enterprise Buyer</option>
+          </select>
+          <span class="field__err" data-err></span>
+        </div>
+        <div class="field">
+          <label for="f-email">SECURE CORPORATE EMAIL ANCHOR</label>
+          <input id="f-email" name="email" type="email" autocomplete="email" required />
+          <span class="field__err" data-err></span>
+        </div>
+        <button class="submit" type="submit">
+          <span class="submit__label">REQUEST TECHNICAL SCHEMATICS &amp; DOSSIER ACCESS</span>
+          <span class="submit__spin" aria-hidden="true"></span>
+        </button>
+        <p class="form__status" id="formStatus" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="foot">
+  <span class="foot__left">© 2026 CASTRALIS INFRASTRUCTURE SYSTEMS. ALL RIGHTS RESERVED. BOUND BY THE LAWS OF THERMODYNAMICS.</span>
+  <span class="foot__right">LATENCY: <b>0.00ms</b> // REGIONAL BOUNDARY: <b class="ok">SECURE</b></span>
+</footer>
+
+<!-- ============ BOTTOM STATUS BAR ============ -->
+<div class="statusbar" aria-hidden="true">
+  <span><i class="statusbar__live"></i> LIVE</span>
+  <span id="sbSection">01 / IDENTITY</span>
+  <span>LAT 0.00ms</span>
+  <span>BOUNDARY: SECURE</span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/environments/RoomEnvironment.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script src="js/main.js" defer></script>
+</body>
+</html>
