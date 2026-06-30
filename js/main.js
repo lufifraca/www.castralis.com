@@ -547,7 +547,7 @@
     renderer.setSize(W(), H());
     renderer.outputEncoding = T.sRGBEncoding;
     renderer.toneMapping = T.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.9;
+    renderer.toneMappingExposure = 0.86;
     host.appendChild(renderer.domElement);
 
     const scene = new T.Scene();
@@ -562,7 +562,7 @@
     } catch (e) {}
 
     // lighting rig
-    const key = new T.DirectionalLight(0xffffff, 1.25); key.position.set(3, 5, 4); scene.add(key);
+    const key = new T.DirectionalLight(0xffffff, 1.08); key.position.set(3, 5, 4); scene.add(key);
     const fill = new T.DirectionalLight(0x9fb6d6, 0.45); fill.position.set(-4, 1.5, -2); scene.add(fill);
     const rim = new T.DirectionalLight(0xe2a33e, 1.05); rim.position.set(-2.5, 2.2, -4); scene.add(rim);
     scene.add(new T.AmbientLight(0x3a465c, 0.35));
@@ -574,21 +574,28 @@
       const tx = new T.CanvasTexture(c); if (srgb) tx.encoding = T.sRGBEncoding; tx.anisotropy = 4; return tx;
     };
     const drawVent = (x, S) => {
-      const cx = S / 2; x.fillStyle = "#1b2538"; x.fillRect(0, 0, S, S);
-      const gap = S * 0.028, lw = S * 0.02;
+      const cx = S / 2; x.fillStyle = "#18222f"; x.fillRect(0, 0, S, S);
+      const gap = S * 0.032, lw = S * 0.023;
       const fan = (clip, vertical) => {
         x.save(); x.beginPath(); clip(); x.clip();
-        x.lineCap = "round"; x.strokeStyle = "#05090f"; x.lineWidth = lw;
+        x.lineCap = "round"; x.strokeStyle = "#04080f"; x.lineWidth = lw;
         for (let p = gap; p < S; p += gap) { x.beginPath(); vertical ? (x.moveTo(p, 0), x.lineTo(p, S)) : (x.moveTo(0, p), x.lineTo(S, p)); x.stroke(); }
-        x.strokeStyle = "rgba(70,97,138,.5)"; x.lineWidth = lw * 0.35;
+        x.strokeStyle = "rgba(88,114,152,.45)"; x.lineWidth = lw * 0.28;
         for (let p = gap; p < S; p += gap) { x.beginPath(); vertical ? (x.moveTo(p - 2, 0), x.lineTo(p - 2, S)) : (x.moveTo(0, p - 2), x.lineTo(S, p - 2)); x.stroke(); }
         x.restore();
       };
       const tri = (a, b, c, d) => { x.moveTo(a, b); x.lineTo(c, d); x.lineTo(cx, cx); x.closePath(); };
       fan(() => tri(0, 0, S, 0), false); fan(() => tri(0, S, S, S), false);
       fan(() => tri(0, 0, 0, S), true);  fan(() => tri(S, 0, S, S), true);
-      x.save(); x.translate(cx, cx); x.rotate(Math.PI / 4); x.fillStyle = "#0a0f1a";
-      const g = S * 0.12; x.fillRect(-g, -g, 2 * g, 2 * g); x.restore();
+      // bold diagonal X-seams (the "kinetic over-under" conduit)
+      x.lineCap = "round"; x.strokeStyle = "#02040a"; x.lineWidth = S * 0.022;
+      x.beginPath(); x.moveTo(0, 0); x.lineTo(S, S); x.moveTo(S, 0); x.lineTo(0, S); x.stroke();
+      x.strokeStyle = "rgba(88,114,152,.32)"; x.lineWidth = S * 0.006;
+      x.beginPath(); x.moveTo(0, 0); x.lineTo(S, S); x.moveTo(S, 0); x.lineTo(0, S); x.stroke();
+      // central amber-rimmed core socket
+      x.save(); x.translate(cx, cx); x.rotate(Math.PI / 4); const g = S * 0.13;
+      x.fillStyle = "#090d18"; x.fillRect(-g, -g, 2 * g, 2 * g);
+      x.strokeStyle = "rgba(226,163,62,.28)"; x.lineWidth = S * 0.012; x.strokeRect(-g, -g, 2 * g, 2 * g); x.restore();
     };
     const radial = (stops) => (x, S) => { const g = x.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2); stops.forEach(s => g.addColorStop(s[0], s[1])); x.fillStyle = g; x.fillRect(0,0,S,S); };
 
@@ -608,7 +615,7 @@
     };
 
     // ---- materials (chassis colour #26303F per blueprint v4.1) ----
-    const mkSteel = () => new T.MeshPhysicalMaterial({ color: 0x26303f, metalness: 0.9, roughness: 0.5, clearcoat: 0.4, clearcoatRoughness: 0.5, envMapIntensity: 0.42 });
+    const mkSteel = () => new T.MeshPhysicalMaterial({ color: 0x1b2532, metalness: 0.9, roughness: 0.57, clearcoat: 0.4, clearcoatRoughness: 0.55, envMapIntensity: 0.32 });
     const steelDark = new T.MeshStandardMaterial({ color: 0x0b111d, metalness: 0.6, roughness: 0.7 });
     const portMat = new T.MeshStandardMaterial({ color: 0x0c1622, metalness: 0.5, roughness: 0.5, emissive: 0x1d5560, emissiveIntensity: 0.7 });
     const boltMat = new T.MeshStandardMaterial({ color: 0x6c7480, metalness: 0.95, roughness: 0.35 });
@@ -693,7 +700,7 @@
       const active = narrate(curP);
       Object.keys(parts).forEach(k => {
         const pt = parts[k]; pt.g.position.y = pt.y0 + pt.off * seg(curP, ranges[k][0], ranges[k][1]);
-        const tgt = k === active ? 0.45 : 0.0; pt.mat.emissive.setHex(0x3a2a10);
+        const tgt = k === active ? 0.16 : 0.0; pt.mat.emissive.setHex(0x2a1c06);
         pt.mat.emissiveIntensity += (tgt - pt.mat.emissiveIntensity) * Math.min(1, dt * 5);
       });
       model.rotation.y += dt * 0.16;
