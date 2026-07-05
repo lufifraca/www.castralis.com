@@ -279,9 +279,6 @@
   /* ----------------------------------------------------------
      7. LIMES MESH (canvas) + PRINCIPIA telemetry tick
   ---------------------------------------------------------- */
-  /* Limes = fault-tolerant self-healing mesh. Not decorative dots: forts sit along the
-     frontier; every few seconds one node fails (its links go dark), the surrounding mesh
-     re-routes (bypass links light up, neighbours halo to absorb load), then it rejoins. */
   function meshViz() {
     const host = $("[data-mesh]");
     if (!host || reduce) return;
@@ -289,64 +286,39 @@
     host.appendChild(cv);
     cv.style.cssText = "width:100%;height:100%;display:block";
     const ctx = cv.getContext("2d");
-    let raf = null, w = 0, h = 0, dpr = Math.min(2, window.devicePixelRatio || 1);
-    let nodes = [], edges = [], adj = [], clock = 0, downIdx = -1, downStart = -999, nextFail = 80;
-
-    // fixed "forts along the limes" layout (fractions of the box)
-    const FRAC = [[.09,.34],[.27,.72],[.31,.26],[.50,.54],[.53,.18],[.73,.70],[.77,.33],[.93,.56]];
+    let nodes = [], raf = null, w = 0, h = 0, dpr = Math.min(2, window.devicePixelRatio || 1);
 
     const seed = () => {
       const R = host.getBoundingClientRect(); w = R.width; h = R.height;
       cv.width = w * dpr; cv.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      nodes = FRAC.map(([fx, fy]) => ({ x: fx * w, y: fy * h, phase: Math.random() * 6.28 }));
-      edges = []; adj = nodes.map(() => []);
-      const R2 = Math.pow(Math.min(w, h) * 1.25, 2);
-      for (let i = 0; i < nodes.length; i++)
-        for (let j = i + 1; j < nodes.length; j++) {
-          const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
-          if (dx * dx + dy * dy < R2) { edges.push({ a: i, b: j, hot: 0 }); adj[i].push(j); adj[j].push(i); }
-        }
+      nodes = Array.from({ length: 9 }, () => ({
+        x: Math.random() * w, y: Math.random() * h,
+        vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25,
+        p: Math.random() * Math.PI * 2,
+      }));
     };
-
     const draw = () => {
-      clock++;
       ctx.clearRect(0, 0, w, h);
-      // failure state machine
-      if (downIdx < 0 && clock >= nextFail) {
-        downIdx = Math.floor(Math.random() * nodes.length); downStart = clock;
-        const nb = adj[downIdx];
-        edges.forEach(e => { if (nb.includes(e.a) && nb.includes(e.b)) e.hot = 1; }); // light the bypass
-      }
-      if (downIdx >= 0 && clock - downStart > 78) { downIdx = -1; nextFail = clock + 60 + Math.random() * 80; }
-
-      // edges
-      edges.forEach(e => {
-        const dead = e.a === downIdx || e.b === downIdx;
-        ctx.beginPath(); ctx.moveTo(nodes[e.a].x, nodes[e.a].y); ctx.lineTo(nodes[e.b].x, nodes[e.b].y);
-        if (dead) { ctx.strokeStyle = "rgba(201,215,236,.06)"; ctx.lineWidth = .5; }
-        else { ctx.strokeStyle = `rgba(181,102,10,${0.16 + e.hot * 0.5})`; ctx.lineWidth = e.hot > .02 ? 1.1 : .6; }
-        ctx.stroke();
-        if (e.hot > 0) e.hot *= 0.95;
-      });
-
-      // nodes
-      nodes.forEach((n, i) => {
-        n.phase += .05;
-        if (i === downIdx) { // failed: hollow, dim ring
-          ctx.strokeStyle = "rgba(201,215,236,.22)"; ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.arc(n.x, n.y, 3, 0, 7); ctx.stroke();
-        } else {
-          const r = 1.7 + Math.sin(n.phase) * .7;
-          ctx.fillStyle = "#B5660A"; ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 7); ctx.fill();
-          if (downIdx >= 0 && adj[downIdx].includes(i)) { // neighbour absorbing load
-            ctx.strokeStyle = "rgba(181,102,10,.5)"; ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.arc(n.x, n.y, r + 2.6, 0, 7); ctx.stroke();
+      for (let i = 0; i < nodes.length; i++) {
+        const a = nodes[i];
+        a.x += a.vx; a.y += a.vy; a.p += .04;
+        if (a.x < 0 || a.x > w) a.vx *= -1;
+        if (a.y < 0 || a.y > h) a.vy *= -1;
+        for (let j = i + 1; j < nodes.length; j++) {
+          const b = nodes[j], d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (d < 70) {
+            ctx.strokeStyle = `rgba(181,102,10,${(1 - d / 70) * .5})`;
+            ctx.lineWidth = .6;
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
           }
         }
+      }
+      nodes.forEach(n => {
+        const r = 1.6 + Math.sin(n.p) * .8;
+        ctx.fillStyle = "#B5660A"; ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 7); ctx.fill();
       });
       raf = requestAnimationFrame(draw);
     };
-
     const io = new IntersectionObserver((es) => {
       es.forEach(e => {
         if (e.isIntersecting) { if (!raf) { seed(); draw(); } }
@@ -706,8 +678,7 @@
     // ---- blueprint look: dark flat fills + glowing line edges (matches the dossier HUD) ----
     const STEEL = 0x6481a6, GOLD = 0xB5660A, ACCENT = 0xC9D7EC;
     const box = (w, h, d) => new T.BoxGeometry(w, h, d);
-    // faint translucent fills → the glowing edges dominate (more wireframe / less solid-3D)
-    const fillMat = () => new T.MeshBasicMaterial({ color: 0x0a1626, transparent: true, opacity: 0.22, depthWrite: false, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+    const fillMat = () => new T.MeshBasicMaterial({ color: 0x0a1019, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
     const lineMat = (c, o) => new T.LineBasicMaterial({ color: c, transparent: true, opacity: o == null ? 0.92 : o });
     const segGeo = (pts) => { const g = new T.BufferGeometry(); g.setAttribute("position", new T.Float32BufferAttribute(pts, 3)); return g; };
     const ringPts = (s, y, arr) => { const p = [[-s,-s],[s,-s],[s,s],[-s,s]]; for (let i = 0; i < 4; i++) { const a = p[i], b = p[(i+1)%4]; arr.push(a[0],y,a[1], b[0],y,b[1]); } };
@@ -744,9 +715,9 @@
     // ---- CAP: conduit grille + amber power core ----
     const capG = new T.Group();
     const capBody = wire(box(1.7, 0.34, 1.7)); capG.add(capBody.group);
-    // top-ventilation deck machined in the image of the Kinetic Conduit (canon §5.1)
-    { const deck = new T.Mesh(new T.PlaneGeometry(1.5, 1.5), new T.MeshBasicMaterial({ map: conduitTex(), transparent: true }));
-      deck.rotation.x = -Math.PI / 2; deck.position.y = 0.175; capG.add(deck); }
+    { const y = 0.172, vp = []; [0.2, 0.34, 0.48, 0.62].forEach(s => ringPts(s, y, vp));
+      vp.push(-0.66, y, -0.66, 0.66, y, 0.66, 0.66, y, -0.66, -0.66, y, 0.66); // X-seam
+      capG.add(new T.LineSegments(segGeo(vp), lineMat(STEEL, 0.7))); }
     const gemGeo = new T.OctahedronGeometry(0.16, 0);
     const gemGroup = new T.Group();
     gemGroup.add(new T.Mesh(gemGeo, new T.MeshBasicMaterial({ color: GOLD })));
@@ -762,17 +733,6 @@
       x.fillStyle = "#cdd8e8"; x.font = "700 58px 'Inter',system-ui,sans-serif"; x.textBaseline = "middle"; x.fillText("CASTRALIS", 104, 62);
       const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = 4;
       return new T.MeshBasicMaterial({ map: t, transparent: true });
-    }
-
-    // the Kinetic Conduit, rasterised for the cap's top-ventilation deck (canon §5.1)
-    function conduitTex() {
-      const S = 512, c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d");
-      const pad = 48, sc = (S - pad * 2) / 120; x.translate(pad, pad); x.scale(sc, sc);
-      const line = new Path2D("M21.7,11.9 57.5,12.1 57.6,17.6 48.1,17.6 48.1,18.9 83.3,54.7 80.2,57.9 79.1,57.5 39.1,17.6 21.7,17.6 17.9,21.6 17.9,39.2 32.2,54.3 28.3,57.6 19.2,48.3 17.9,48.3 17.9,57.0 12.4,57.1 12.4,20.4 15.5,14.6 21.7,11.9ZM62.6,11.9 99.1,12.1 103.9,14.1 106.6,17.7 107.7,20.9 107.7,57.0 102.2,57.0 102.2,48.2 100.9,48.1 66.3,83.5 62.6,79.7 102.1,39.1 102.2,21.6 98.3,17.6 80.6,17.6 65.6,32.1 62.5,28.2 71.7,18.9 71.7,17.7 62.6,17.6 62.6,11.9ZM53.3,36.8 57.1,40.5 17.9,81.0 17.9,98.8 22.1,102.4 40.1,102.4 54.7,88.5 57.9,92.3 49.2,101.1 49.2,102.3 57.5,102.4 57.7,108.0 21.9,108.1 18.6,107.2 14.0,103.4 12.3,98.9 12.3,62.5 17.8,62.5 17.9,72.1 19.2,72.1 53.3,36.8ZM59.4,49.5 70.2,59.5 60.4,70.2 49.6,60.1 59.4,49.5ZM90.9,62.3 100.9,72.0 102.2,71.9 102.2,62.5 107.7,62.5 107.5,100.2 104.0,105.6 98.1,108.1 62.6,108.1 62.6,102.3 71.2,102.3 71.2,101.0 36.7,66.2 40.6,62.4 80.3,102.3 98.1,102.3 102.1,98.1 102.1,81.2 87.7,66.3 90.9,62.3Z");
-      const dia = new Path2D("M59.8,49.6 70.2,59.7 59.9,69.9 49.8,59.8 59.8,49.6Z");
-      x.fillStyle = "#aebfda"; x.fill(line, "evenodd");
-      x.fillStyle = "#B5660A"; x.fill(dia, "evenodd");
-      const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = 4; return t;
     }
 
     const model = new T.Group(); model.add(baseG, coreG, capG); model.position.y = -0.5; scene.add(model);
@@ -832,27 +792,6 @@
     return true;
   }
 
-  /* node starts centred, then slides into the left column as you scroll while the
-     changing captions reveal in the right column — everything visible, side by side */
-  function triadLayout() {
-    const wrap = $(".xtriad"), box = $(".xbox"), cap = $("#xCaption");
-    if (!wrap || !box) return;
-    const apply = (p) => {
-      if (reduce || window.innerWidth < 820) { box.style.setProperty("--x", "0"); if (cap) cap.style.opacity = "1"; return; }
-      const enter = Math.min(1, p / 0.10);                 // node re-centres over the first 10% of scroll
-      box.style.setProperty("--x", ((1 - enter) * 50).toFixed(1) + "%");
-      if (cap) cap.style.opacity = Math.min(1, Math.max(0, (p - 0.03) / 0.09)).toFixed(2);
-    };
-    apply(0);
-    if (reduce) return;
-    if (hasGSAP && window.ScrollTrigger) {
-      ScrollTrigger.create({ trigger: wrap, start: "top top", end: "bottom bottom", scrub: true, onUpdate: s => apply(s.progress) });
-    } else {
-      const calc = () => { const r = wrap.getBoundingClientRect(); const total = wrap.offsetHeight - window.innerHeight; apply(Math.min(1, Math.max(0, -r.top / total))); };
-      window.addEventListener("scroll", calc, { passive: true }); window.addEventListener("resize", calc); calc();
-    }
-  }
-
   function initTriad() {
     const xbox = $(".xbox"), small = window.innerWidth < 820;
     if (!reduce && !small && hasWebGL() && window.THREE) {
@@ -902,35 +841,35 @@
   }
 
   /* ----------------------------------------------------------
-     13. PLOTTER DRAW-ON — headings/eyebrows type on left-to-right with a
-         pen-plotter cursor (replaces the old decrypt-cipher: wrong metaphor
-         for the de-spied register, and hostile to screen readers)
+     13. DECRYPT TEXT — headings/eyebrows resolve from cipher
   ---------------------------------------------------------- */
   function decryptText() {
     if (reduce) return;
+    const CH = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789/\\#%<>*+=·";
     const targets = $$(".sec-head__h2, .xstage__h2, .doctrine__h2, .gateway__h2, .sec-head__sub, .readout__sub, .hero__tag");
     const run = (el) => {
-      if (el._dz) return;
-      const full = el.getAttribute("data-full") || el.innerHTML;
-      el.setAttribute("data-full", full);
-      const tokens = full.split(/(<[^>]+>)/g);
-      let total = 0; tokens.forEach(t => { if (!t.startsWith("<")) total += t.length; });
+      if (el._dz) return;                                  // already decrypting
+      const html = el.getAttribute("data-full") || el.innerHTML;
+      el.setAttribute("data-full", html);
+      const tokens = html.split(/(<[^>]+>)/g);
+      let total = 0; tokens.forEach(t => { if (!t.startsWith("<")) total += t.replace(/\s/g, "").length; });
       if (!total) return;
       el._dz = true;
-      const dur = Math.min(900, 220 + total * 20); let t0 = null;
+      const dur = Math.min(1100, 260 + total * 15); let t0 = null;
       const frame = (ts) => {
         if (t0 == null) t0 = ts;
-        const prog = Math.min(1, (ts - t0) / dur), shown = Math.floor(prog * total);
+        const prog = Math.min(1, (ts - t0) / dur), locked = Math.floor(prog * total);
         let idx = 0, out = "";
-        for (const t of tokens) {
-          if (t.startsWith("<")) { out += t; continue; }
-          for (const ch of t) out += (idx++ < shown ? ch : (/\s/.test(ch) ? ch : ""));
-        }
-        el.innerHTML = out + (prog < 1 ? '<span class="dz-cursor" aria-hidden="true">▌</span>' : "");
-        if (prog < 1) requestAnimationFrame(frame); else { el.innerHTML = full; el._dz = false; }
+        tokens.forEach(t => {
+          if (t.startsWith("<")) { out += t; return; }
+          for (const ch of t) { if (/\s/.test(ch)) { out += ch; continue; } out += idx++ < locked ? ch : CH[Math.floor(Math.random() * CH.length)]; }
+        });
+        el.innerHTML = out;
+        if (prog < 1) requestAnimationFrame(frame); else { el.innerHTML = html; el._dz = false; }
       };
       requestAnimationFrame(frame);
     };
+    // decrypt once — the first time each element scrolls into view per page load/refresh
     const io = new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) { run(e.target); io.unobserve(e.target); } }), { threshold: 0.55 });
     targets.forEach(t => io.observe(t));
   }
@@ -942,7 +881,6 @@
     document.documentElement.classList.add("js");
     boot();
     initTriad();
-    triadLayout();
     buildCastrum();
     castrumAnimate();
     chromeAndRail();
